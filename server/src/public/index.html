@@ -1,0 +1,163 @@
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="bower_components/core.js/client/core.min.js"></script>
+<script type="text/javascript" src="bower_components/feathers-client/dist/feathers.js"></script>
+<script type="text/javascript" src="bower_components/vue/dist/vue.js"></script>
+
+<div id="app">
+    <ul>
+        <li v-for="note in notes" track-by="$index">
+            {{ note|json }}
+        </li>
+    </ul>
+    <input type="text" v-model="note.title">
+    <input type="text" v-model="note.content">
+    <button @click="save">add</button>
+
+    <input type="text" v-model="user.email">
+    <input type="text" v-model="user.password">
+    <button @click="register">注册</button>
+
+    <input type="text" v-model="user.email">
+    <input type="text" v-model="user.password">
+    <button @click="login">登录</button>
+</div>
+<script type="text/javascript">
+    var host = 'http://localhost:3001';
+
+    // Set up Feathers client side
+    var app = feathers()
+            .configure(feathers.rest(host).jquery(jQuery))
+            .configure(feathers.hooks())
+            .configure(feathers.authentication({storage: window.localStorage}));
+
+    // Authenticate. Normally you'd grab these from a login form rather than hard coding them
+
+
+    var messageService = app.service('articles');
+    var userService = app.service('users');
+
+
+    new Vue({
+        el: '#app',
+        data: {
+            notes: [],
+            note: {},
+            user:{
+                email:'leven@71an.com',
+                password:'56os.com'
+            },
+            cuser: {
+
+            }
+        },
+
+        ready () {
+//          var _vm=this;
+//          app.authenticate({
+//              type: 'local',
+//              'email': 'leven@71an.com',
+//              'password': '56os.com'
+//          }).then(function(result){
+//              console.log('Authenticated!', app.get('token'));
+//              _vm.user=result.data
+//
+//              _vm.note.user_id=_vm.user._id;
+//
+//              _vm.init();
+//          }).catch(function(error){
+//              console.error('Error authenticating!', error);
+//          });
+            // When a new message is created, add it to the messages array which is bound to the view.
+            messageService.on('created', message => {
+                this.notes.push(message)
+                console.log(message)
+            })
+            // Listen for when a message is deleted from the server and remove it from the view
+            messageService.on('removed', message => this.removeMessage(message))
+            messageService.on('patched', message => {
+                // update the view for all socket clients
+                let index = _.findIndex(this.messages, {_id: message._id})
+                this.messages[index].text = message.text
+            })
+
+        },
+        methods: {
+            init(){
+                //console.log(this.user)
+
+                // Call the messages service on the server via websocket
+                messageService.find({query: {user_id: this.cuser._id}}).then(result => {
+                    this.notes=[];
+                    this.notes = result.data
+                })
+
+            },
+            save () {
+
+                // Persist a new message to the db
+                messageService.create(this.note)
+                // Clear input field
+                this.newMessage = ''
+            },
+
+            register(){
+                var _vm=this;
+                app.service('/api/v1/users').create({
+                    email: _vm.user.email,
+                    password: _vm.user.password
+                });
+                // userService.create(this.use)
+                userService.on('created', message => console.log(message))
+
+
+            },
+            login(){
+                var _vm=this;
+                app.authenticate({
+                    type: 'local',
+                    'email': _vm.user.email,
+                    'password': _vm.user.password
+                }).then(function (result) {
+                    console.log('Authenticated!', app.get('token'));
+                    _vm.cuser = result.data
+
+                    _vm.note.user_id = _vm.cuser._id;
+
+                    _vm.init();
+                }).catch(function (error) {
+                    console.error('Error authenticating!', error);
+                });
+
+            }
+        }
+//          editMessage (message) {
+//              this.beforeEditCache = message.text
+//              this.editedMessage = message
+//          },
+//          doneEdit (message) {
+//              message.text = message.text.trim()
+//              this.editedMessage = null
+//              if (!message.text) {
+//                  this.removeMessage(message)
+//              }
+//              messageService.patch(message._id, message)
+//          },
+//          cancelEdit (message) {
+//              message.text = this.beforeEditCache
+//              this.editedMessage = null
+//          },
+//          // delete message from the db
+//          deleteMessage (index) {
+//              messageService.remove(this.messages[index]._id)
+//          },
+//          // remove message from the view
+//          removeMessage (message) {
+//              // find the index of the obj to remove from the observable array
+//              let index = _.findIndex(this.messages, { _id: message._id })
+//              // remove the obj at position [index] from the observable array
+//              this.messages.$remove(this.messages[index])
+//          }
+
+    })
+
+</script>

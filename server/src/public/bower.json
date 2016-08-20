@@ -1,0 +1,17 @@
+{
+  "name": "public",
+  "homepage": "https://github.com/winiceo/kevio",
+  "authors": [
+    "赵少辉 <zhaoshaohui@pmkoo.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
